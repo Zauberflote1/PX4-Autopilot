@@ -645,11 +645,10 @@ union filter_control_status_u {
 		uint64_t fake_pos                : 1; ///< 32 - true when fake position measurements are being fused
 		uint64_t fake_hgt                : 1; ///< 33 - true when fake height measurements are being fused
 		uint64_t gravity_vector          : 1; ///< 34 - true when gravity vector measurements are being fused
-
-		uint64_t ev2_pos                  : 1; ///< 12 - true when local position data fusion from external vision is intended
-		uint64_t ev2_yaw                  : 1; ///< 13 - true when yaw data from external vision measurements fusion is intended
-		uint64_t ev2_hgt                  : 1; ///< 14 - true when height data from external vision measurements is being fused
-		uint64_t ev2_vel                  : 1; ///< 24 - true when local frame velocity data fusion from external vision measurements is intended
+		uint64_t ev2_pos                 : 1; ///< 35 - true when local position data fusion from external vision is intended
+		uint64_t ev2_yaw                 : 1; ///< 36 - true when yaw data from external vision measurements fusion is intended
+		uint64_t ev2_hgt                 : 1; ///< 37 - true when height data from external vision measurements is being fused
+		uint64_t ev2_vel                 : 1; ///< 38 - true when local frame velocity data fusion from external vision measurements is intended
 	} flags;
 	uint64_t value;
 };

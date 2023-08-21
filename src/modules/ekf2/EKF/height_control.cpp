@@ -59,7 +59,7 @@ void Ekf::checkHeightSensorRefFallback()
 		return;
 	}
 
-	HeightSensor fallback_list[4];
+	HeightSensor fallback_list[5];
 
 	switch (_params.height_sensor_ref) {
 	default:

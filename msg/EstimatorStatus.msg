@@ -46,6 +46,9 @@ uint8 CS_SYNTHETIC_MAG_Z = 25	# 25 - true when we are using a synthesized measur
 uint8 CS_VEHICLE_AT_REST = 26	# 26 - true when the vehicle is at rest
 uint8 CS_GPS_YAW_FAULT = 27	# 27 - true when the GNSS heading has been declared faulty and is no longer being used
 uint8 CS_RNG_FAULT = 28		# 28 - true when the range finder has been declared faulty and is no longer being used
+uint8 CS_EV2_POS = 29		# 29 - true when local position data from external vision is being fused
+uint8 CS_EV2_YAW = 30		# 30 - true when yaw data from external vision measurements is being fused
+uint8 CS_EV2_HGT = 31		# 31 - true when height data from external vision measurements is being fused
 
 uint32 filter_fault_flags	# Bitmask to indicate EKF internal faults
 # 0 - true if the fusion of the magnetometer X-axis has encountered a numerical error

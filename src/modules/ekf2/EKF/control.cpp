@@ -83,6 +83,9 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 
 			} else if (_control_status.flags.ev_hgt) {
 				height_source = "ev";
+			} else if (_control_status.flags.ev2_hgt) {
+				height_source = "ev2";
+
 
 			} else if (_control_status.flags.gps_hgt) {
 				height_source = "gps";
