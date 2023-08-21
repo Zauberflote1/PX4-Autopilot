@@ -713,7 +713,7 @@ private:
 	uint8_t _nb_ev2_yaw_reset_available{0};
 #endif // CONFIG_EKF2_EV2
 
-//TODO EV2
+	bool _inhibit_ev2_yaw_use{false};
 	bool _inhibit_ev_yaw_use{false};	///< true when the vision yaw data should not be used (e.g.: NE fusion requires true North)
 
 	estimator_aid_source1d_s _aid_src_gnss_hgt{};
@@ -1076,23 +1076,6 @@ private:
 	void controlExternalVision2Fusion();
 	void updateEv2AttitudeErrorFilter(extVision2Sample &ev2_sample, bool ev2_reset);
 	void controlEv2HeightFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
-	void controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source2d_s &aid_src);
-	void controlEv2VelFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source3d_s &aid_src);
-	void controlEv2YawFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
-
-	void startEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, estimator_aid_source2d_s &aid_src);
-	void updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, bool quality_sufficient, bool reset, estimator_aid_source2d_s &aid_src);
-	void stopEv2PosFusion();
-	void stopEv2HgtFusion();
-	void stopEv2VelFusion();
-	void stopEv2YawFusion();
-#endif // CONFIG_EKF2_EV2
-
-#if defined(CONFIG_EKF2_EV2)
-	// control fusion of external vision observations
-	void controlExternalVision2Fusion();
-	void updateEv2AttitudeErrorFilter(extVision2Sample &ev2_sample, bool ev2_reset);
-	void controlEv2HeightFusion(const extVisio2nSample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
 	void controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source2d_s &aid_src);
 	void controlEv2VelFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source3d_s &aid_src);
 	void controlEv2YawFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);

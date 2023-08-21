@@ -757,7 +757,7 @@ void Ekf::get_innovation_test_status(uint16_t &status, float &mag, float &vel, f
 
 	if (_control_status.flags.ev2_pos) {
 		float ev2_pos = sqrtf(Vector2f(_aid_src_ev2_pos.test_ratio).max());
-		pos = math::max(pos, ev_pos, FLT_MIN);
+		pos = math::max(pos, ev2_pos, FLT_MIN);
 	}
 #endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_OPTICAL_FLOW)

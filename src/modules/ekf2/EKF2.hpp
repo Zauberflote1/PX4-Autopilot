@@ -653,7 +653,7 @@ private:
 		_param_ekf2_ev2_delay, ///< off-board vision measurement delay relative to the IMU (mSec)
 
 		(ParamExtInt<px4::params::EKF2_EV2_CTRL>) _param_ekf2_ev2_ctrl,	 ///< external vision (EV) control selection
-		(ParamInt<px4::params::EKF2_EV2_NOISE_MD>) _param_ekf2_ev2_noise_md, ///< determine source of vision observation noise
+		(ParamInt<px4::params::EKF2_EV2_NOISE_M>) _param_ekf2_ev2_noise_md, ///< determine source of vision observation noise
 		(ParamExtInt<px4::params::EKF2_EV2_QMIN>) _param_ekf2_ev2_qmin,
 		(ParamExtFloat<px4::params::EKF2_EV2P_NOISE>)
 		_param_ekf2_ev2p_noise, ///< default position observation noise for exernal vision measurements (m)
