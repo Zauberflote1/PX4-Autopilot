@@ -62,6 +62,18 @@ if(CONFIG_EKF2_AIRSPEED)
 	list(APPEND EKF_SRCS airspeed_fusion.cpp)
 endif()
 
+if(CONFIG_EKF2_EV2)
+	list(APPEND EKF_SRCS
+		EKF/ev2_control.cpp
+		EKF/ev2_height_control.cpp
+		EKF/ev2_pos_control.cpp
+		EKF/ev2_vel_control.cpp
+		EKF/ev2_yaw_control.cpp
+	)
+endif()
+
+
+
 if(CONFIG_EKF2_AUXVEL)
 	list(APPEND EKF_SRCS auxvel_fusion.cpp)
 endif()

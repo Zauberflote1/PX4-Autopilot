@@ -91,6 +91,12 @@ public:
 	void getEvVelPosInnovRatio(float &hvel, float &vvel, float &hpos, float &vpos) const;
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	void getEv2VelPosInnov(float hvel[2], float &vvel, float hpos[2], float &vpos) const;
+	void getEv2VelPosInnovVar(float hvel[2], float &vvel, float hpos[2], float &vpos) const;
+	void getEv2VelPosInnovRatio(float &hvel, float &vvel, float &hpos, float &vpos) const;
+#endif // CONFIG_EKF2_EV2
+
 	void getBaroHgtInnov(float &baro_hgt_innov) const { baro_hgt_innov = _aid_src_baro_hgt.innovation; }
 	void getBaroHgtInnovVar(float &baro_hgt_innov_var) const { baro_hgt_innov_var = _aid_src_baro_hgt.innovation_variance; }
 	void getBaroHgtInnovRatio(float &baro_hgt_innov_ratio) const { baro_hgt_innov_ratio = _aid_src_baro_hgt.test_ratio; }
@@ -181,6 +187,13 @@ public:
 			return;
 		}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_yaw) {
+			heading_innov = _aid_src_ev2_yaw.innovation;
+			return;
+		}
+#endif // CONFIG_EKF2_EV2
 	}
 
 	void getHeadingInnovVar(float &heading_innov_var) const
@@ -208,6 +221,13 @@ public:
 			return;
 		}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_yaw) {
+			heading_innov_var = _aid_src_ev2_yaw.innovation_variance;
+			return;
+		}
+#endif // CONFIG_EKF2_EV2
 	}
 
 	void getHeadingInnovRatio(float &heading_innov_ratio) const
@@ -235,6 +255,12 @@ public:
 			return;
 		}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_yaw) {
+			heading_innov_ratio = _aid_src_ev2_yaw.test_ratio;
+			return;
+		}
+#endif // CONFIG_EKF2_EV2
 	}
 
 	void getMagInnov(float mag_innov[3]) const { memcpy(mag_innov, _aid_src_mag.innovation, sizeof(_aid_src_mag.innovation)); }
@@ -471,6 +497,12 @@ public:
 	const BiasEstimator::status &getEvPosBiasEstimatorStatus(int i) const { return _ev_pos_b_est.getStatus(i); }
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	const BiasEstimator::status &getEv2HgtBiasEstimatorStatus() const { return _ev2_hgt_b_est.getStatus(); }
+
+	const BiasEstimator::status &getEv2PosBiasEstimatorStatus(int i) const { return _ev2_pos_b_est.getStatus(i); }
+#endif // CONFIG_EKF2_EV2
+
 #if defined(CONFIG_EKF2_AIRSPEED)
 	const auto &aid_src_airspeed() const { return _aid_src_airspeed; }
 #endif // CONFIG_EKF2_AIRSPEED
@@ -490,6 +522,13 @@ public:
 	const auto &aid_src_ev_vel() const { return _aid_src_ev_vel; }
 	const auto &aid_src_ev_yaw() const { return _aid_src_ev_yaw; }
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EXTERNAL_VISION)
+	const auto &aid_src_ev2_hgt() const { return _aid_src_ev2_hgt; }
+	const auto &aid_src_ev2_pos() const { return _aid_src_ev2_pos; }
+	const auto &aid_src_ev2_vel() const { return _aid_src_ev2_vel; }
+	const auto &aid_src_ev2_yaw() const { return _aid_src_ev2_yaw; }
+#endif // CONFIG_EKF2_EV2
 
 	const auto &aid_src_gnss_hgt() const { return _aid_src_gnss_hgt; }
 	const auto &aid_src_gnss_pos() const { return _aid_src_gnss_pos; }
@@ -660,6 +699,21 @@ private:
 	uint8_t _nb_ev_vel_reset_available{0};
 	uint8_t _nb_ev_yaw_reset_available{0};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EV2)
+	estimator_aid_source1d_s _aid_src_ev2_hgt{};
+	estimator_aid_source2d_s _aid_src_ev2_pos{};
+	estimator_aid_source3d_s _aid_src_ev2_vel{};
+	estimator_aid_source1d_s _aid_src_ev2_yaw{};
+
+	float _ev2_yaw_pred_prev{}; ///< previous value of yaw state used by odometry fusion (m)
+
+	uint8_t _nb_ev2_pos_reset_available{0};
+	uint8_t _nb_ev2_vel_reset_available{0};
+	uint8_t _nb_ev2_yaw_reset_available{0};
+#endif // CONFIG_EKF2_EV2
+
+//TODO EV2
 	bool _inhibit_ev_yaw_use{false};	///< true when the vision yaw data should not be used (e.g.: NE fusion requires true North)
 
 	estimator_aid_source1d_s _aid_src_gnss_hgt{};
@@ -1017,6 +1071,40 @@ private:
 	void stopEvYawFusion();
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	// control fusion of external vision observations
+	void controlExternalVision2Fusion();
+	void updateEv2AttitudeErrorFilter(extVision2Sample &ev2_sample, bool ev2_reset);
+	void controlEv2HeightFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
+	void controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source2d_s &aid_src);
+	void controlEv2VelFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source3d_s &aid_src);
+	void controlEv2YawFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
+
+	void startEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, estimator_aid_source2d_s &aid_src);
+	void updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, bool quality_sufficient, bool reset, estimator_aid_source2d_s &aid_src);
+	void stopEv2PosFusion();
+	void stopEv2HgtFusion();
+	void stopEv2VelFusion();
+	void stopEv2YawFusion();
+#endif // CONFIG_EKF2_EV2
+
+#if defined(CONFIG_EKF2_EV2)
+	// control fusion of external vision observations
+	void controlExternalVision2Fusion();
+	void updateEv2AttitudeErrorFilter(extVision2Sample &ev2_sample, bool ev2_reset);
+	void controlEv2HeightFusion(const extVisio2nSample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
+	void controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source2d_s &aid_src);
+	void controlEv2VelFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source3d_s &aid_src);
+	void controlEv2YawFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing, const bool ev2_reset, const bool quality_sufficient, estimator_aid_source1d_s &aid_src);
+
+	void startEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, estimator_aid_source2d_s &aid_src);
+	void updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measurement_var, bool quality_sufficient, bool reset, estimator_aid_source2d_s &aid_src);
+	void stopEv2PosFusion();
+	void stopEv2HgtFusion();
+	void stopEv2VelFusion();
+	void stopEv2YawFusion();
+#endif // CONFIG_EKF2_EV2
+
 	// control fusion of GPS observations
 	void controlGpsFusion(const imuSample &imu_delayed);
 	bool shouldResetGpsFusion() const;
@@ -1163,7 +1251,12 @@ private:
 	AlphaFilter<Quatf> _ev_q_error_filt{0.001f};
 	bool _ev_q_error_initialized{false};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
-
+#if defined(CONFIG_EKF2_EV2)
+	HeightBiasEstimator _ev2_hgt_b_est{HeightSensor::EV2, _height_sensor_ref};
+	PositionBiasEstimator _ev2_pos_b_est{static_cast<uint8_t>(PositionSensor::EV2), _position_sensor_ref};
+	AlphaFilter<Quatf> _ev2_q_error_filt{0.001f};
+	bool _ev2_q_error_initialized{false};
+#endif // CONFIG_EKF2_EV2
 	// Resets the main Nav EKf yaw to the estimator from the EKF-GSF yaw estimator
 	// Resets the horizontal velocity and position to the default navigation sensor
 	// Returns true if the reset was successful

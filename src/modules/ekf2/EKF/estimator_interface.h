@@ -126,7 +126,10 @@ public:
 	// set external vision position and attitude data
 	void setExtVisionData(const extVisionSample &evdata);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
-
+#if defined(CONFIG_EKF2_EV2)
+	// set external vision position and attitude data
+	void setExtVision2Data(const extVision2Sample &ev2data);
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_AUXVEL)
 	void setAuxVelData(const auxVelSample &auxvel_sample);
 #endif // CONFIG_EKF2_AUXVEL
@@ -333,6 +336,10 @@ protected:
 	extVisionSample _ev_sample_prev{};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	extVision2Sample _ev2_sample_prev{};
+#endif // CONFIG_EKF2_EV2
+
 #if defined(CONFIG_EKF2_RANGE_FINDER)
 	RingBuffer<rangeSample> *_range_buffer{nullptr};
 	uint64_t _time_last_range_buffer_push{0};
@@ -405,6 +412,11 @@ protected:
 	RingBuffer<extVisionSample> *_ext_vision_buffer{nullptr};
 	uint64_t _time_last_ext_vision_buffer_push{0};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EV2)
+	RingBuffer<extVision2Sample> *_ext_vision2_buffer{nullptr};
+	uint64_t _time_last_ext_vision2_buffer_push{0};
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_AUXVEL)
 	RingBuffer<auxVelSample> *_auxvel_buffer{nullptr};
 #endif // CONFIG_EKF2_AUXVEL

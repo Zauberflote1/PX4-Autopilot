@@ -180,6 +180,13 @@ void Ekf::controlGpsFusion(const imuSample &imu_delayed)
 							}
 
 #endif // CONFIG_EKF2_GNSS_YAW
+#if defined(CONFIG_EKF2_EV2)
+
+							if (_control_status.flags.ev2_yaw) {
+								_inhibit_ev2_yaw_use = true;
+							}
+
+#endif // CONFIG_EKF2_EV2
 
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 

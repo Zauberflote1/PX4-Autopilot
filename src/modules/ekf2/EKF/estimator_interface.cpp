@@ -404,6 +404,46 @@ void EstimatorInterface::setExtVisionData(const extVisionSample &evdata)
 }
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+void EstimatorInterface::setExtVision2Data(const extVision2Sample &ev2data)
+{
+	if (!_initialised) {
+		return;
+	}
+
+	// Allocate the required buffer size if not previously done
+	if (_ext_vision2_buffer == nullptr) {
+		_ext_vision2_buffer = new RingBuffer<extVision2Sample>(_obs_buffer_length);
+
+		if (_ext_vision2_buffer == nullptr || !_ext_vision2_buffer->valid()) {
+			delete _ext_vision2_buffer;
+			_ext_vision2_buffer = nullptr;
+			printBufferAllocationFailed("vision2");
+			return;
+		}
+	}
+
+	// calculate the system time-stamp for the mid point of the integration period
+	const int64_t time_us = ev2data.time_us
+				- static_cast<int64_t>(_params.ev2_delay_ms * 1000)
+				- static_cast<int64_t>(_dt_ekf_avg * 5e5f); // seconds to microseconds divided by 2
+
+	// limit data rate to prevent data being lost
+	if (time_us >= static_cast<int64_t>(_ext_vision2_buffer->get_newest().time_us + _min_obs_interval_us)) {
+
+		extVision2Sample ev2_sample_new{ev2data};
+		ev2_sample_new.time_us = time_us;
+
+		_ext_vision2_buffer->push(ev2_sample_new);
+		_time_last_ext_vision2_buffer_push = _time_latest_us;
+
+	} else {
+		ECL_WARN("EV2 data too fast %" PRIi64 " < %" PRIu64 " + %d", time_us, _ext_vision2_buffer->get_newest().time_us, _min_obs_interval_us);
+	}
+}
+#endif // CONFIG_EKF2_EV2
+
+
 #if defined(CONFIG_EKF2_AUXVEL)
 void EstimatorInterface::setAuxVelData(const auxVelSample &auxvel_sample)
 {

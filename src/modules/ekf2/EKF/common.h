@@ -67,6 +67,7 @@ using math::Utilities::updateYawInRotMat;
 
 // maximum sensor intervals in usec
 static constexpr uint64_t BARO_MAX_INTERVAL     = 200e3;  ///< Maximum allowable time interval between pressure altitude measurements (uSec)
+static constexpr uint64_t EV2_MAX_INTERVAL      = 200e3;  ///< Maximum allowable time interval between external vision 2 system measurements (uSec)
 static constexpr uint64_t EV_MAX_INTERVAL       = 200e3;  ///< Maximum allowable time interval between external vision system measurements (uSec)
 static constexpr uint64_t GNSS_MAX_INTERVAL     = 500e3;  ///< Maximum allowable time interval between GNSS measurements (uSec)
 static constexpr uint64_t GNSS_YAW_MAX_INTERVAL = 1500e3; ///< Maximum allowable time interval between GNSS yaw measurements (uSec)
@@ -120,13 +121,15 @@ enum HeightSensor : uint8_t {
 	GNSS  = 1,
 	RANGE = 2,
 	EV    = 3,
-	UNKNOWN  = 4
+	EV2    = 4,
+	UNKNOWN  = 5
 };
 
 enum class PositionSensor : uint8_t {
 	UNKNOWN = 0,
 	GNSS    = 1,
 	EV      = 2,
+	EV2     = 3,
 };
 
 enum class ImuCtrl : uint8_t {
@@ -154,6 +157,14 @@ enum class EvCtrl : uint8_t {
 	VEL  = (1<<2),
 	YAW  = (1<<3)
 };
+
+enum class Ev2Ctrl : uint8_t {
+	HPOS = (1<<0),
+	VPOS = (1<<1),
+	VEL  = (1<<2),
+	YAW  = (1<<3)
+};
+
 
 enum class MagCheckMask : uint8_t {
 	STRENGTH    = (1 << 0),
@@ -248,6 +259,22 @@ struct extVisionSample {
 	int8_t     quality{};     ///< quality indicator between 0 and 100
 };
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+#if defined(CONFIG_EKF2_EV2)
+struct extVision2Sample {
+	uint64_t    time_us{};     ///< timestamp of the measurement (uSec)
+	Vector3f    pos{};         ///< XYZ position in external vision's local reference frame (m) - Z must be aligned with down axis
+	Vector3f    vel{};         ///< FRD velocity in reference frame defined in vel_frame variable (m/sec) - Z must be aligned with down axis
+	Quatf       quat{};        ///< quaternion defining rotation from body to earth frame
+	Vector3f    position_var{};    ///< XYZ position variances (m**2)
+	Vector3f    velocity_var{};    ///< XYZ velocity variances ((m/sec)**2)
+	Vector3f    orientation_var{}; ///< orientation variance (rad**2)
+	PositionFrame pos_frame = PositionFrame::LOCAL_FRAME_FRD;
+	VelocityFrame vel_frame = VelocityFrame::BODY_FRAME_FRD;
+	uint8_t     reset_counter{};
+	int8_t     quality{};     ///< quality indicator between 0 and 100
+};
+#endif // CONFIG_EKF2_EV2
 
 #if defined(CONFIG_EKF2_DRAG_FUSION)
 struct dragSample {
@@ -394,6 +421,23 @@ struct parameters {
 	const float terrain_timeout{10.f};      ///< maximum time for invalid bottom distance measurements before resetting terrain estimate (s)
 
 #endif // CONFIG_EKF2_RANGE_FINDER
+
+#if defined(CONFIG_EKF2_EV2)
+	// vision position fusion
+	int32_t ev2_ctrl{0};
+	float ev2_delay_ms{175.0f};              ///< off-board vision measurement delay relative to the IMU (mSec)
+
+	float ev2_vel_noise{0.1f};               ///< minimum allowed observation noise for EV velocity fusion (m/sec)
+	float ev2_pos_noise{0.1f};               ///< minimum allowed observation noise for EV position fusion (m)
+	float ev2_att_noise{0.1f};               ///< minimum allowed observation noise for EV attitude fusion (rad/sec)
+	int32_t ev2_quality_minimum{0};          ///< vision minimum acceptable quality integer
+	float ev2_vel_innov_gate{3.0f};          ///< vision velocity fusion innovation consistency gate size (STD)
+	float ev2_pos_innov_gate{5.0f};          ///< vision position fusion innovation consistency gate size (STD)
+	float ev2_hgt_bias_nsd{0.13f};           ///< process noise for vision height bias estimation (m/s/sqrt(Hz))
+
+	Vector3f ev2_pos_body{};                 ///< xyz position of VI-sensor focal point in body frame (m)
+#endif // CONFIG_EKF2_EV2
+	// float gravity_noise{1.0f};
 
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	// vision position fusion
@@ -654,6 +698,12 @@ union information_event_status_u {
 		bool reset_hgt_to_gps           : 1; ///< 14 - true when the vertical position state is reset to the gps measurement
 		bool reset_hgt_to_rng           : 1; ///< 15 - true when the vertical position state is reset to the rng measurement
 		bool reset_hgt_to_ev            : 1; ///< 16 - true when the vertical position state is reset to the ev measurement
+
+
+		bool starting_vision2_pos_fusion : 1; ///< 17 - true when the filter starts using vision2 system position measurements to correct the state estimates
+		bool starting_vision2_vel_fusion : 1; ///< 18 - true when the filter starts using vision2 system velocity measurements to correct the state estimates
+		bool starting_vision2_yaw_fusion : 1; ///< 19 - true when the filter starts using vision2 system yaw  measurements to correct the state estimates
+		bool reset_hgt_to_ev2            : 1; ///< 20 - true when the vertical position state is reset to the ev2 measurement
 	} flags;
 	uint32_t value;
 };

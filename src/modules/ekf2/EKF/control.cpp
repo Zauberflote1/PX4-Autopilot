@@ -131,6 +131,11 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 	controlExternalVisionFusion();
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	// Additional data odometry data from an external estimator can be fused.
+	controlExternalVision2Fusion();
+#endif // CONFIG_EKF2_EV2
+
 #if defined(CONFIG_EKF2_AUXVEL)
 	// Additional horizontal velocity data from an auxiliary sensor can be fused
 	controlAuxVelFusion();

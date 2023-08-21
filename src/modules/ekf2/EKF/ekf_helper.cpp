@@ -150,6 +150,9 @@ void Ekf::resetHorizontalPositionTo(const Vector2f &new_horz_pos, const Vector2f
 
 	_state_reset_status.reset_count.posNE++;
 
+#if defined(CONFIG_EKF2_EV2)
+	_ev2_pos_b_est.setBias(_ev2_pos_b_est.getBias() - _state_reset_status.posNE_change);
+#endif
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	_ev_pos_b_est.setBias(_ev_pos_b_est.getBias() - _state_reset_status.posNE_change);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
@@ -198,6 +201,9 @@ void Ekf::resetVerticalPositionTo(const float new_vert_pos, float new_vert_pos_v
 	_state_reset_status.reset_count.posD++;
 
 	_baro_b_est.setBias(_baro_b_est.getBias() + delta_z);
+#if defined(CONFIG_EKF2_EV2)
+	_ev2_hgt_b_est.setBias(_ev2_hgt_b_est.getBias() - delta_z);
+#endif
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	_ev_hgt_b_est.setBias(_ev_hgt_b_est.getBias() - delta_z);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
@@ -342,7 +348,38 @@ void Ekf::getEvVelPosInnovRatio(float &hvel, float &vvel, float &hpos, float &vp
 	vpos = _aid_src_ev_hgt.test_ratio;
 }
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+void Ekf::getEv2VelPosInnov(float hvel[2], float &vvel, float hpos[2], float &vpos) const
+{
+	hvel[0] = _aid_src_ev2_vel.innovation[0];
+	hvel[1] = _aid_src_ev2_vel.innovation[1];
+	vvel    = _aid_src_ev2_vel.innovation[2];
 
+	hpos[0] = _aid_src_ev2_pos.innovation[0];
+	hpos[1] = _aid_src_ev2_pos.innovation[1];
+	vpos    = _aid_src_ev2_hgt.innovation;
+}
+
+void Ekf::getEv2VelPosInnovVar(float hvel[2], float &vvel, float hpos[2], float &vpos) const
+{
+	hvel[0] = _aid_src_ev2_vel.innovation_variance[0];
+	hvel[1] = _aid_src_ev2_vel.innovation_variance[1];
+	vvel    = _aid_src_ev2_vel.innovation_variance[2];
+
+	hpos[0] = _aid_src_ev2_pos.innovation_variance[0];
+	hpos[1] = _aid_src_ev2_pos.innovation_variance[1];
+	vpos    = _aid_src_ev2_hgt.innovation_variance;
+}
+
+void Ekf::getEv2VelPosInnovRatio(float &hvel, float &vvel, float &hpos, float &vpos) const
+{
+	hvel = fmaxf(_aid_src_ev2_vel.test_ratio[0], _aid_src_ev2_vel.test_ratio[1]);
+	vvel = _aid_src_ev2_vel.test_ratio[2];
+
+	hpos = fmaxf(_aid_src_ev2_pos.test_ratio[0], _aid_src_ev2_pos.test_ratio[1]);
+	vpos = _aid_src_ev2_hgt.test_ratio;
+}
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_AUXVEL)
 void Ekf::getAuxVelInnov(float aux_vel_innov[2]) const
 {
@@ -481,6 +518,11 @@ void Ekf::get_ekf_gpos_accuracy(float *ekf_eph, float *ekf_epv) const
 			hpos_err = math::max(hpos_err, Vector2f(_aid_src_ev_pos.innovation).norm());
 		}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_pos) {
+			hpos_err = math::max(hpos_err, Vector2f(_aid_src_ev2_pos.innovation).norm());
+		}
+#endif // CONFIG_EKF2_EV2
 	}
 
 	*ekf_eph = hpos_err;
@@ -500,7 +542,11 @@ void Ekf::get_ekf_lpos_accuracy(float *ekf_eph, float *ekf_epv) const
 		if (_control_status.flags.gps) {
 			hpos_err = math::max(hpos_err, Vector2f(_aid_src_gnss_pos.innovation).norm());
 		}
-
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_pos) {
+			hpos_err = math::max(hpos_err, Vector2f(_aid_src_ev2_pos.innovation).norm());
+		}
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 		if (_control_status.flags.ev_pos) {
 			hpos_err = math::max(hpos_err, Vector2f(_aid_src_ev_pos.innovation).norm());
@@ -543,6 +589,15 @@ void Ekf::get_ekf_vel_accuracy(float *ekf_evh, float *ekf_evv) const
 			vel_err_conservative = math::max(vel_err_conservative, Vector2f(_aid_src_ev_vel.innovation).norm());
 		}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+		if (_control_status.flags.ev2_pos) {
+			vel_err_conservative = math::max(vel_err_conservative, Vector2f(_aid_src_ev2_pos.innovation).norm());
+		}
+
+		if (_control_status.flags.ev2_vel) {
+			vel_err_conservative = math::max(vel_err_conservative, Vector2f(_aid_src_ev2_vel.innovation).norm());
+		}
+#endif // CONFIG_EKF2_EV2
 
 		hvel_err = math::max(hvel_err, vel_err_conservative);
 	}
@@ -666,7 +721,11 @@ void Ekf::get_innovation_test_status(uint16_t &status, float &mag, float &vel, f
 		mag = math::max(mag, sqrtf(_aid_src_ev_yaw.test_ratio));
 	}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
-
+#if defined(CONFIG_EKF2_EV2)
+	if (_control_status.flags.ev2_yaw) {
+		mag = math::max(mag, sqrtf(_aid_src_ev2_yaw.test_ratio));
+	}
+#endif // CONFIG_EKF2_EV2
 	// return the largest velocity and position innovation test ratio
 	vel = NAN;
 	pos = NAN;
@@ -690,7 +749,17 @@ void Ekf::get_innovation_test_status(uint16_t &status, float &mag, float &vel, f
 		pos = math::max(pos, ev_pos, FLT_MIN);
 	}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+	if (_control_status.flags.ev2_vel) {
+		float ev2_vel = sqrtf(Vector3f(_aid_src_ev2_vel.test_ratio).max());
+		vel = math::max(vel, ev2_vel, FLT_MIN);
+	}
 
+	if (_control_status.flags.ev2_pos) {
+		float ev2_pos = sqrtf(Vector2f(_aid_src_ev2_pos.test_ratio).max());
+		pos = math::max(pos, ev_pos, FLT_MIN);
+	}
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_OPTICAL_FLOW)
 	if (isOnlyActiveSourceOfHorizontalAiding(_control_status.flags.opt_flow)) {
 		float of_vel = sqrtf(Vector2f(_aid_src_optical_flow.test_ratio).max());
@@ -725,6 +794,12 @@ void Ekf::get_innovation_test_status(uint16_t &status, float &mag, float &vel, f
 		n_hgt_sources++;
 	}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+	if (_control_status.flags.ev2_hgt) {
+		hgt_sum += sqrtf(_aid_src_ev2_hgt.test_ratio);
+		n_hgt_sources++;
+	}
+#endif // CONFIG_EKF2_EV2
 
 	if (n_hgt_sources > 0) {
 		hgt = math::max(hgt_sum / static_cast<float>(n_hgt_sources), FLT_MIN);
@@ -1144,6 +1219,13 @@ void Ekf::resetQuatStateYaw(float yaw, float yaw_variance)
 		_ev_q_error_filt.reset(ev_q_error_updated);
 	}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+	// update EV attitude error filter
+	if (_ev2_q_error_initialized) {
+		const Quatf ev2_q_error_updated = (q_error * _ev2_q_error_filt.getState()).normalized();
+		_ev2_q_error_filt.reset(ev2_q_error_updated);
+	}
+#endif // CONFIG_EKF2_EV2
 
 	// record the state change
 	if (_state_reset_status.reset_count.quat == _state_reset_count_prev.quat) {

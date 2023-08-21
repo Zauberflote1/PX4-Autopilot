@@ -69,43 +69,58 @@ void Ekf::checkHeightSensorRefFallback()
 		fallback_list[0] = HeightSensor::GNSS;
 		fallback_list[1] = HeightSensor::BARO;
 		fallback_list[2] = HeightSensor::EV;
-		fallback_list[3] = HeightSensor::RANGE;
+		fallback_list[3] = HeightSensor::EV2;
+		fallback_list[4] = HeightSensor::RANGE;
 		break;
 
 	case HeightSensor::BARO:
 		fallback_list[0] = HeightSensor::BARO;
 		fallback_list[1] = HeightSensor::GNSS;
 		fallback_list[2] = HeightSensor::EV;
-		fallback_list[3] = HeightSensor::RANGE;
+		fallback_list[3] = HeightSensor::EV2;
+		fallback_list[4] = HeightSensor::RANGE;
 		break;
 
 	case HeightSensor::GNSS:
 		fallback_list[0] = HeightSensor::GNSS;
 		fallback_list[1] = HeightSensor::BARO;
 		fallback_list[2] = HeightSensor::EV;
-		fallback_list[3] = HeightSensor::RANGE;
+		fallback_list[3] = HeightSensor::EV2;
+		fallback_list[4] = HeightSensor::RANGE;
 		break;
 
 	case HeightSensor::RANGE:
 		fallback_list[0] = HeightSensor::RANGE;
 		fallback_list[1] = HeightSensor::EV;
-		fallback_list[2] = HeightSensor::BARO;
-		fallback_list[3] = HeightSensor::GNSS;
+		fallback_list[2] = HeightSensor::EV2;
+		fallback_list[3] = HeightSensor::BARO;
+		fallback_list[4] = HeightSensor::GNSS;
 		break;
 
 	case HeightSensor::EV:
 		fallback_list[0] = HeightSensor::EV;
-		fallback_list[1] = HeightSensor::RANGE;
-		fallback_list[2] = HeightSensor::BARO;
-		fallback_list[3] = HeightSensor::GNSS;
+		fallback_list[1] = HeightSensor::EV2;
+		fallback_list[2] = HeightSensor::RANGE;
+		fallback_list[3] = HeightSensor::BARO;
+		fallback_list[4] = HeightSensor::GNSS;
+		break;
+
+
+	case HeightSensor::EV2:
+		fallback_list[0] = HeightSensor::EV2;
+		fallback_list[1] = HeightSensor::EV;
+		fallback_list[2] = HeightSensor::RANGE;
+		fallback_list[3] = HeightSensor::BARO;
+		fallback_list[4] = HeightSensor::GNSS;
 		break;
 	}
 
-	for (unsigned i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 5; i++) {
 		if (((fallback_list[i] == HeightSensor::BARO) && _control_status.flags.baro_hgt)
 		    || ((fallback_list[i] == HeightSensor::GNSS) && _control_status.flags.gps_hgt)
 		    || ((fallback_list[i] == HeightSensor::RANGE) && _control_status.flags.rng_hgt)
-		    || ((fallback_list[i] == HeightSensor::EV) && _control_status.flags.ev_hgt)) {
+		    || ((fallback_list[i] == HeightSensor::EV) && _control_status.flags.ev_hgt)
+		    || ((fallback_list[i] == HeightSensor::EV2) && _control_status.flags.ev2_hgt)) {
 			ECL_INFO("fallback to secondary height reference");
 			_height_sensor_ref = fallback_list[i];
 			break;
@@ -203,8 +218,19 @@ Likelihood Ekf::estimateInertialNavFallingLikelihood() const
 	}
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+
+#if defined(CONFIG_EKF2_EV2)
+	if (_control_status.flags.ev2_hgt) {
+		checks[6] = {ReferenceType::GROUND, _aid_src_ev2_hgt.innovation, _aid_src_ev2_hgt.innovation_variance};
+	}
+
+	if (_control_status.flags.ev2_vel) {
+		checks[7] = {ReferenceType::GROUND, _aid_src_ev2_vel.innovation[2], _aid_src_ev2_vel.innovation_variance[2]};
+	}
+#endif // CONFIG_EKF2_EV2
+
 	// Compute the check based on innovation ratio for all the sources
-	for (unsigned i = 0; i < 6; i++) {
+	for (unsigned i = 0; i < 8; i++) {
 		if (checks[i].innov_var < FLT_EPSILON) {
 			continue;
 		}
@@ -215,13 +241,13 @@ Likelihood Ekf::estimateInertialNavFallingLikelihood() const
 	}
 
 	// Check all the sources agains each other
-	for (unsigned i = 0; i < 6; i++) {
+	for (unsigned i = 0; i < 8; i++) {
 		if (checks[i].failed_lim) {
 			// There is a chance that the inertial nav is falling if one source is failing the test
 			likelihood_medium = true;
 		}
 
-		for (unsigned j = 0; j < 6; j++) {
+		for (unsigned j = 0; j < 8; j++) {
 
 			if ((checks[i].ref_type != checks[j].ref_type) && checks[i].failed_lim && checks[j].failed_min) {
 				// There is a high chance that the inertial nav is failing if two sources are failing the test

@@ -440,6 +440,12 @@ void Ekf::fixCovarianceErrors(bool force_symmetry)
 			bool bad_vz_ev  = false;
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+			bool bad_vz_ev2  = _control_status.flags.ev2_vel && (down_dvel_bias * _aid_src_ev2_vel.innovation[2] < 0.0f);
+#else
+			bool bad_vz_ev2  = false;
+#endif // CONFIG_EKF2_EV2
+
 			if (bad_vz_gps || bad_vz_ev) {
 				bool bad_z_baro = _control_status.flags.baro_hgt && (down_dvel_bias * _aid_src_baro_hgt.innovation < 0.0f);
 				bool bad_z_gps  = _control_status.flags.gps_hgt  && (down_dvel_bias * _aid_src_gnss_hgt.innovation < 0.0f);
@@ -455,6 +461,13 @@ void Ekf::fixCovarianceErrors(bool force_symmetry)
 #else
 				bool bad_z_ev   = false;
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+
+
+#if defined(CONFIG_EKF2_EV2)
+				bool bad_z_ev2   = _control_status.flags.ev2_hgt   && (down_dvel_bias * _aid_src_ev2_hgt.innovation   < 0.0f);
+#else
+				bool bad_z_ev2   = false;
+#endif // CONFIG_EKF2_EV2
 
 				if (bad_z_baro || bad_z_gps || bad_z_rng || bad_z_ev) {
 					bad_acc_bias = true;

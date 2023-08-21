@@ -130,6 +130,13 @@ void Ekf::reset()
 	resetEstimatorAidStatus(_aid_src_ev_yaw);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
 
+#if defined(CONFIG_EKF2_EV2)
+	resetEstimatorAidStatus(_aid_src_ev2_hgt);
+	resetEstimatorAidStatus(_aid_src_ev2_pos);
+	resetEstimatorAidStatus(_aid_src_ev2_vel);
+	resetEstimatorAidStatus(_aid_src_ev2_yaw);
+#endif // CONFIG_EKF2_EV2
+
 	resetEstimatorAidStatus(_aid_src_gnss_hgt);
 	resetEstimatorAidStatus(_aid_src_gnss_pos);
 	resetEstimatorAidStatus(_aid_src_gnss_vel);

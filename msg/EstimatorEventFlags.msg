@@ -20,6 +20,10 @@ bool reset_hgt_to_baro                  # 13 - true when the vertical position s
 bool reset_hgt_to_gps                   # 14 - true when the vertical position state is reset to the gps measurement
 bool reset_hgt_to_rng                   # 15 - true when the vertical position state is reset to the rng measurement
 bool reset_hgt_to_ev                    # 16 - true when the vertical position state is reset to the ev measurement
+bool starting_vision2_pos_fusion        # 17 - true when the filter starts using vision2 system position measurements to correct the state estimates
+bool starting_vision2_vel_fusion        # 18 - true when the filter starts using vision2 system velocity measurements to correct the state estimates
+bool starting_vision2_yaw_fusion        # 19 - true when the filter starts using vision2 system yaw  measurements to correct the state estimates
+bool reset_hgt_to_ev2                   # 20 - true when the vertical position state is reset to the ev2 measurement
 
 # warning events
 uint32 warning_event_changes            # number of warning event changes

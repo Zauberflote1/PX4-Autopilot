@@ -12,3 +12,4 @@ float32[3] innov_test_ratio     # normalized innovation squared test ratio
 
 # TOPICS estimator_bias3d
 # TOPICS estimator_ev_pos_bias
+# TOPICS estimator_ev2_pos_bias

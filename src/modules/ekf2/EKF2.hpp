@@ -174,6 +174,10 @@ private:
 	void PublishRngHgtBias(const hrt_abstime &timestamp);
 #endif // CONFIG_EKF2_RANGE_FINDER
 
+#if defined(CONFIG_EKF2_EV2)
+	void PublishEv2PosBias(const hrt_abstime &timestamp);
+#endif // CONFIG_EV2
+
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	void PublishEvPosBias(const hrt_abstime &timestamp);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
@@ -208,6 +212,10 @@ private:
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	bool UpdateExtVisionSample(ekf2_timestamps_s &ekf2_timestamps);
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+#if defined(CONFIG_EKF2_EV2)
+	bool UpdateExtVision2Sample(ekf2_timestamps_s &ekf2_timestamps);
+#endif // CONFIG_EKF2_EV2
+
 #if defined(CONFIG_EKF2_OPTICAL_FLOW)
 	bool UpdateFlowSample(ekf2_timestamps_s &ekf2_timestamps);
 #endif // CONFIG_EKF2_OPTICAL_FLOW
@@ -325,7 +333,25 @@ private:
 
 	uORB::PublicationMulti<estimator_bias3d_s> _estimator_ev_pos_bias_pub{ORB_ID(estimator_ev_pos_bias)};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
+	hrt_abstime _status_gnss_hgt_pub_last{0};
+	hrt_abstime _status_gnss_pos_pub_last{0};
+	hrt_abstime _status_gnss_vel_pub_last{0};
+#if defined(CONFIG_EKF2_EV2)
+	uORB::PublicationMulti<estimator_aid_source1d_s> _estimator_aid_src_ev2_hgt_pub {ORB_ID(estimator_aid_src_ev2_hgt)};
+	uORB::PublicationMulti<estimator_aid_source2d_s> _estimator_aid_src_ev2_pos_pub{ORB_ID(estimator_aid_src_ev2_pos)};
+	uORB::PublicationMulti<estimator_aid_source3d_s> _estimator_aid_src_ev2_vel_pub{ORB_ID(estimator_aid_src_ev2_vel)};
+	uORB::PublicationMulti<estimator_aid_source1d_s> _estimator_aid_src_ev2_yaw_pub{ORB_ID(estimator_aid_src_ev2_yaw)};
+	hrt_abstime _status_ev2_hgt_pub_last{0};
+	hrt_abstime _status_ev2_pos_pub_last{0};
+	hrt_abstime _status_ev2_vel_pub_last{0};
+	hrt_abstime _status_ev2_yaw_pub_last{0};
 
+	matrix::Vector3f _last_ev2_bias_published{};
+
+	uORB::Subscription _ev2_odom_sub{ORB_ID(vehicle_visual2_odometry)};
+
+	uORB::PublicationMulti<estimator_bias3d_s> _estimator_ev2_pos_bias_pub{ORB_ID(estimator_ev2_pos_bias)};
+#endif // CONFIG_EKF2_EXTERNAL_VISION
 	hrt_abstime _status_gnss_hgt_pub_last{0};
 	hrt_abstime _status_gnss_pos_pub_last{0};
 	hrt_abstime _status_gnss_vel_pub_last{0};
@@ -620,6 +646,33 @@ private:
 		(ParamExtFloat<px4::params::EKF2_TERR_GRAD>)
 		_param_ekf2_terr_grad, ///< gradient of terrain used to estimate process noise due to changing position (m/m)
 #endif // CONFIG_EKF2_RANGE_FINDER
+
+#if defined(CONFIG_EKF2_EV2)
+		// vision estimate fusion
+		(ParamExtFloat<px4::params::EKF2_EV2_DELAY>)
+		_param_ekf2_ev2_delay, ///< off-board vision measurement delay relative to the IMU (mSec)
+
+		(ParamExtInt<px4::params::EKF2_EV2_CTRL>) _param_ekf2_ev2_ctrl,	 ///< external vision (EV) control selection
+		(ParamInt<px4::params::EKF2_EV2_NOISE_MD>) _param_ekf2_ev2_noise_md, ///< determine source of vision observation noise
+		(ParamExtInt<px4::params::EKF2_EV2_QMIN>) _param_ekf2_ev2_qmin,
+		(ParamExtFloat<px4::params::EKF2_EV2P_NOISE>)
+		_param_ekf2_ev2p_noise, ///< default position observation noise for exernal vision measurements (m)
+		(ParamExtFloat<px4::params::EKF2_EVV2_NOISE>)
+		_param_ekf2_evv2_noise, ///< default velocity observation noise for exernal vision measurements (m/s)
+		(ParamExtFloat<px4::params::EKF2_EV2A_NOISE>)
+		_param_ekf2_ev2a_noise, ///< default angular observation noise for exernal vision measurements (rad)
+		(ParamExtFloat<px4::params::EKF2_EVV2_GATE>)
+		_param_ekf2_evv2_gate, ///< external vision velocity innovation consistency gate size (STD)
+		(ParamExtFloat<px4::params::EKF2_EV2P_GATE>)
+		_param_ekf2_ev2p_gate, ///< external vision position innovation consistency gate size (STD)
+
+		(ParamExtFloat<px4::params::EKF2_EV2_POS_X>)
+		_param_ekf2_ev2_pos_x, ///< X position of VI sensor focal point in body frame (m)
+		(ParamExtFloat<px4::params::EKF2_EV2_POS_Y>)
+		_param_ekf2_ev2_pos_y, ///< Y position of VI sensor focal point in body frame (m)
+		(ParamExtFloat<px4::params::EKF2_EV2_POS_Z>)
+		_param_ekf2_ev2_pos_z, ///< Z position of VI sensor focal point in body frame (m)
+#endif
 
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 		// vision estimate fusion
