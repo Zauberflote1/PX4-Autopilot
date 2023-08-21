@@ -64,11 +64,11 @@ endif()
 
 if(CONFIG_EKF2_EV2)
 	list(APPEND EKF_SRCS
-		EKF/ev2_control.cpp
-		EKF/ev2_height_control.cpp
-		EKF/ev2_pos_control.cpp
-		EKF/ev2_vel_control.cpp
-		EKF/ev2_yaw_control.cpp
+		ev2_control.cpp
+		ev2_height_control.cpp
+		ev2_pos_control.cpp
+		ev2_vel_control.cpp
+		ev2_yaw_control.cpp
 	)
 endif()
 

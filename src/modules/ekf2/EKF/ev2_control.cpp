@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 /**
- * @file ev_control.cpp
+ * @file ev2_control.cpp
  * Control functions for ekf external vision control
  */
 

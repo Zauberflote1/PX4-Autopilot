@@ -1575,19 +1575,122 @@ PARAM_DEFINE_INT32(EKF2_SYNT_MAG_Z, 0);
  */
 PARAM_DEFINE_FLOAT(EKF2_GSF_TAS, 15.0f);
 
+/**
+ *
+ * @group EKF2
+ * @boolean
+ */
+PARAM_DEFINE_INT32(EKF2_EV2_CTRL, 0);
+
+/**
+ * Vision Position Estimator delay relative to IMU measurements
+ *
+ * @group EKF2
+ * @min 0
+ * @max 300
+ * @unit ms
+ * @reboot_required true
+ * @decimal 1
+ */
+
 PARAM_DEFINE_FLOAT(EKF2_EV2_DELAY, 0);
+/**
+ * Gate size for vision velocity fusion
+ *
+ * Sets the number of standard deviations used by the innovation consistency test.
+ * @group EKF2
+ * @min 1.0
+ * @unit SD
+ * @decimal 1
+*/
+
 PARAM_DEFINE_FLOAT(EKF2_EVV2_GATE, 3.0f);
+/**
+ * Gate size for vision position fusion
+ *
+ * Sets the number of standard deviations used by the innovation consistency test.
+ * @group EKF2
+ * @min 1.0
+ * @unit SD
+ * @decimal 1
+*/
 PARAM_DEFINE_FLOAT(EKF2_EV2P_GATE, 5.0f);
-
+/**
+ * X position of VI sensor focal point in body frame (right axis with origin relative to vehicle centre of gravity)
+ *
+ * @group EKF2
+ * @unit m
+ * @decimal 3
+ */
 PARAM_DEFINE_FLOAT(EKF2_EV2_POS_X, 0.0f);
-PARAM_DEFINE_FLOAT(EKF2_EV2_POS_Y, 0.0f);
-PARAM_DEFINE_FLOAT(EKF2_EV2_POS_Z, 0.0f);
+/**
+ * Y position of VI sensor focal point in body frame (right axis with origin relative to vehicle centre of gravity)
+ *
+ * @group EKF2
+ * @unit m
+ * @decimal 3
+ */
 
+PARAM_DEFINE_FLOAT(EKF2_EV2_POS_Y, 0.0f);
+/**
+ * Z position of VI sensor focal point in body frame (right axis with origin relative to vehicle centre of gravity)
+ *
+ * @group EKF2
+ * @unit m
+ * @decimal 3
+ */
+PARAM_DEFINE_FLOAT(EKF2_EV2_POS_Z, 0.0f);
+/**
+ * External vision (EV) minimum quality (optional)
+ *
+ * External vision will only be started and fused if the quality metric is above this threshold.
+ * The quality metric is a completely optional field provided by some VIO systems.
+ *
+ * @group EKF2
+ * @min 0
+ * @max 100
+ * @decimal 1
+ */
 PARAM_DEFINE_INT32(EKF2_EV2_NOISE_M, 0);
+/**
+ * Measurement noise for vision position observations used to lower bound or replace the uncertainty included in the message
+ *
+ * @group EKF2
+ * @min 0.01
+ * @unit m
+ * @decimal 2
+ */
+PARAM_DEFINE_FLOAT(EKF2_EV2P_NOISE, 0.1f);
+ /**
+ * External vision (EV) minimum quality (optional)
+ *
+ * External vision will only be started and fused if the quality metric is above this threshold.
+ * The quality metric is a completely optional field provided by some VIO systems.
+ *
+ * @group EKF2
+ * @min 0
+ * @max 100
+ * @decimal 1
+ */
 PARAM_DEFINE_INT32(EKF2_EV2_QMIN, 0);
 
-PARAM_DEFINE_FLOAT(EKF2_EV2P_NOISE, 0.1f);
+/**
+ * Measurement noise for vision position observations used to lower bound or replace the uncertainty included in the message
+ *
+ * @group EKF2
+ * @min 0.01
+ * @unit m
+ * @decimal 2
+ */
 PARAM_DEFINE_FLOAT(EKF2_EVV2_NOISE, 0.1f);
+/**
+ * Measurement noise for vision position observations used to lower bound or replace the uncertainty included in the message
+ *
+ * @group EKF2
+ * @min 0.01
+ * @unit m
+ * @decimal 2
+ */
 PARAM_DEFINE_FLOAT(EKF2_EV2A_NOISE, 0.1f);
 
-PARAM_DEFINE_INT32(EKF2_EV2_CTRL, 15);
+
