@@ -38,7 +38,7 @@
 
 #include "ekf.h"
 
-static constexpr const char *EV_AID_SRC_NAME = "EV position";
+static constexpr const char *EV2_AID_SRC_NAME = "EV2 position";
 
 
 void Ekf::controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool common_starting_conditions_passing,
@@ -185,7 +185,7 @@ void Ekf::controlEv2PosFusion(const extVision2Sample &ev2_sample, const bool com
 
 		} else {
 			// Stop fusion but do not declare it faulty
-			ECL_WARN("stopping %s fusion, continuing conditions failing", EV_AID_SRC_NAME);
+			ECL_WARN("stopping %s fusion, continuing conditions failing", EV2_AID_SRC_NAME);
 			stopEv2PosFusion();
 		}
 
@@ -201,12 +201,12 @@ void Ekf::startEv2PosFusion(const Vector2f &measurement, const Vector2f &measure
 	// activate fusion
 	// TODO:  (_params.position_sensor_ref == PositionSensor::EV)
 	if (_control_status.flags.gps) {
-		ECL_INFO("starting %s fusion", EV_AID_SRC_NAME);
+		ECL_INFO("starting %s fusion", EV2_AID_SRC_NAME);
 		_ev2_pos_b_est.setBias(-Vector2f(_state.pos.xy()) + measurement);
 		_ev2_pos_b_est.setFusionActive();
 
 	} else {
-		ECL_INFO("starting %s fusion, resetting state", EV_AID_SRC_NAME);
+		ECL_INFO("starting %s fusion, resetting state", EV2_AID_SRC_NAME);
 		//_position_sensor_ref = PositionSensor::EV;
 		_information_events.flags.reset_pos_to_vision = true;
 		resetHorizontalPositionTo(measurement, measurement_var);
@@ -227,7 +227,7 @@ void Ekf::updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measur
 		if (quality_sufficient) {
 
 			if (!_control_status.flags.gps) {
-				ECL_INFO("reset to %s", EV_AID_SRC_NAME);
+				ECL_INFO("reset to %s", EV2_AID_SRC_NAME);
 				_information_events.flags.reset_pos_to_vision = true;
 				resetHorizontalPositionTo(measurement, measurement_var);
 				_ev2_pos_b_est.reset();
@@ -259,7 +259,7 @@ void Ekf::updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measur
 
 		if ((_nb_ev2_pos_reset_available > 0) && quality_sufficient) {
 			// Data seems good, attempt a reset
-			ECL_WARN("%s fusion failing, resetting", EV_AID_SRC_NAME);
+			ECL_WARN("%s fusion failing, resetting", EV2_AID_SRC_NAME);
 
 			if (_control_status.flags.gps && !pos_xy_fusion_failing) {
 				// reset EV position bias
@@ -287,7 +287,7 @@ void Ekf::updateEv2PosFusion(const Vector2f &measurement, const Vector2f &measur
 		} else {
 			// A reset did not fix the issue but all the starting checks are not passing
 			// This could be a temporary issue, stop the fusion without declaring the sensor faulty
-			ECL_WARN("stopping %s, fusion failing", EV_AID_SRC_NAME);
+			ECL_WARN("stopping %s, fusion failing", EV2_AID_SRC_NAME);
 			stopEv2PosFusion();
 		}
 	}

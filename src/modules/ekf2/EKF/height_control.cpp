@@ -188,7 +188,7 @@ Likelihood Ekf::estimateInertialNavFallingLikelihood() const
 		float innov_var{0.f};
 		bool failed_min{false};
 		bool failed_lim{false};
-	} checks[6] {};
+	} checks[8] {};
 
 	if (_control_status.flags.baro_hgt) {
 		checks[0] = {ReferenceType::PRESSURE, _aid_src_baro_hgt.innovation, _aid_src_baro_hgt.innovation_variance};

@@ -2429,7 +2429,7 @@ bool EKF2::UpdateExtVision2Sample(ekf2_timestamps_s &ekf2_timestamps)
 					ev2_data.position_var(2) = fmaxf(ev2p_noise_var, ev2_odom_pos_var(2));
 
 				} else {
-					ev2_data.position_var.setAll(evp_noise_var);
+					ev2_data.position_var.setAll(ev2p_noise_var);
 				}
 
 				new_ev2_odom = true;
@@ -2459,9 +2459,9 @@ bool EKF2::UpdateExtVision2Sample(ekf2_timestamps_s &ekf2_timestamps)
 
 			if ((_param_ekf2_ev2_noise_md.get() == 0) && ev2_odom_q_var.isAllFinite()) {
 
-				ev2_data.orientation_var(0) = fmaxf(ev2a_noise_var, ev_odom_q_var(0));
-				ev2_data.orientation_var(1) = fmaxf(ev2a_noise_var, ev_odom_q_var(1));
-				ev2_data.orientation_var(2) = fmaxf(ev2a_noise_var, ev_odom_q_var(2));
+				ev2_data.orientation_var(0) = fmaxf(ev2a_noise_var, ev2_odom_q_var(0));
+				ev2_data.orientation_var(1) = fmaxf(ev2a_noise_var, ev2_odom_q_var(1));
+				ev2_data.orientation_var(2) = fmaxf(ev2a_noise_var, ev2_odom_q_var(2));
 
 			} else {
 				ev2_data.orientation_var.setAll(ev2a_noise_var);

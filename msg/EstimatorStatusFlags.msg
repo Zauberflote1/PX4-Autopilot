@@ -40,6 +40,10 @@ bool cs_fake_pos                # 32 - true when fake position measurements are 
 bool cs_fake_hgt                # 33 - true when fake height measurements are being fused
 bool cs_gravity_vector          # 34 - true when gravity vector measurements are being fused
 
+bool cs_ev2_pos                # 35 - true when local position data fusion from external vision is intended
+bool cs_ev2_yaw                # 36 - true when yaw data from external vision measurements fusion is intended
+bool cs_ev2_hgt                # 37 - true when height data from external vision measurements is being fused
+
 # fault status
 uint32 fault_status_changes   # number of filter fault status (fs) changes
 bool fs_bad_mag_x             #  0 - true if the fusion of the magnetometer X-axis has encountered a numerical error

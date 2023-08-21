@@ -156,6 +156,11 @@ private:
 		DEPRECATED_ROTATE_EXT_VIS  = (1 << 6), ///< set to true to if the EV observations are in a non NED reference frame and need to be rotated before being used
 		DEPRECATED_USE_GPS_YAW     = (1 << 7), ///< set to true to use GPS yaw data if available (DEPRECATED, use gnss_ctrl)
 		DEPRECATED_USE_EXT_VIS_VEL = (1 << 8), ///< set to true to use external vision velocity data
+
+		DEPRECATED_USE_EXT_VIS2_YAW = (1 << 9), ///< set to true to use external vision2 quaternion data for yaw
+		DEPRECATED_ROTATE_EXT_VIS2  = (1 << 10), ///< set to true to if the EV2 observations are in a non NED reference frame and need to be rotated before being used
+		DEPRECATED_USE_EXT_VIS2_VEL = (1 << 11), ///< set to true to use external vision2 velocity data
+		DEPRECATED_USE_EXT_VIS2_POS = (1 << 12), ///< set to true to use external vision2 position data
 	};
 
 	static constexpr uint8_t MAX_NUM_IMUS = 4;
@@ -352,9 +357,6 @@ private:
 
 	uORB::PublicationMulti<estimator_bias3d_s> _estimator_ev2_pos_bias_pub{ORB_ID(estimator_ev2_pos_bias)};
 #endif // CONFIG_EKF2_EXTERNAL_VISION
-	hrt_abstime _status_gnss_hgt_pub_last{0};
-	hrt_abstime _status_gnss_pos_pub_last{0};
-	hrt_abstime _status_gnss_vel_pub_last{0};
 #if defined(CONFIG_EKF2_GNSS_YAW)
 	hrt_abstime _status_gnss_yaw_pub_last {0};
 #endif // CONFIG_EKF2_GNSS_YAW
