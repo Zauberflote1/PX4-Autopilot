@@ -1574,11 +1574,22 @@ PARAM_DEFINE_INT32(EKF2_SYNT_MAG_Z, 0);
  * @decimal 1
  */
 PARAM_DEFINE_FLOAT(EKF2_GSF_TAS, 15.0f);
-
 /**
+ * External vision (EV) sensor aiding
+ *
+ * Set bits in the following positions to enable:
+ * 0 : Horizontal position fusion
+ * 1 : Vertical position fusion
+ * 2 : 3D velocity fusion
+ * 3 : Yaw
  *
  * @group EKF2
- * @boolean
+ * @min 0
+ * @max 15
+ * @bit 0 Horizontal position
+ * @bit 1 Vertical position
+ * @bit 2 3D velocity
+ * @bit 3 Yaw
  */
 PARAM_DEFINE_INT32(EKF2_EV2_CTRL, 0);
 

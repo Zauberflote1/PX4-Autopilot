@@ -705,7 +705,7 @@ void EKF2::Run()
 
 #if defined(CONFIG_EKF2_EV2)
 		UpdateExtVision2Sample(ekf2_timestamps);
-#endif // CONFIG_EKF2_EXTERNAL_VISION
+#endif // CONFIG_EKF2_EV2
 #if defined(CONFIG_EKF2_OPTICAL_FLOW)
 		UpdateFlowSample(ekf2_timestamps);
 #endif // CONFIG_EKF2_OPTICAL_FLOW
