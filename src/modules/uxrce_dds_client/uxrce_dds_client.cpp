@@ -388,7 +388,7 @@ void UxrceddsClient::run()
 				_connected = false;
 			}
 
-			px4_usleep(1000);
+			px4_usleep(1);
 		}
 
 		uxr_delete_session_retries(&session, _connected ? 1 : 0);
