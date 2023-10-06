@@ -38,6 +38,8 @@ static constexpr int max_topic_size = 512;
 static_assert(sizeof(@(pub['simple_base_type'])_s) <= max_topic_size, "topic too large, increase max_topic_size");
 @[    end for]@
 
+
+
 struct SendSubscription {
 	const struct orb_metadata *orb_meta;
 	uxrObjectId data_writer;
@@ -121,16 +123,61 @@ void SendTopicsSubs::update(uxrSession *session, uxrStreamId reliable_out_stream
 	}
 }
 
-// Publishers for received messages
 struct RcvTopicsPubs {
-@[    for sub in subscriptions]@
-	uORB::Publication<@(sub['simple_base_type'])_s> @(sub['topic_simple'])_pub{ORB_ID(@(sub['topic_simple']))};
-@[    end for]@
+    @[for sub in subscriptions]@
+    uORB::Publication<@(sub['simple_base_type'])_s> @(sub['topic_simple'])_pub{ORB_ID(@(sub['topic_simple']))};
+    @[end for]@
 
-	uint32_t num_payload_received{};
+    struct RcvSubscription {
+        uxrObjectId data_reader;
+	uint16_t request_id;
+        uxrStreamId stream_id;
+        const struct orb_metadata *orb_meta;
+        uint16_t length;
+    };
 
-	bool init(uxrSession *session, uxrStreamId reliable_out_stream_id, uxrStreamId reliable_in_stream_id, uxrStreamId best_effort_in_stream_id, uxrObjectId participant_id, const char *client_namespace);
+    RcvSubscription rcv_subscriptions[@(len(subscriptions))] {};
+    px4_pollfd_struct_t fds_incoming[@(len(subscriptions))] {};
+
+    uint32_t num_payload_received{};
+
+    bool init(uxrSession *session, uxrStreamId reliable_out_stream_id,
+              uxrStreamId reliable_in_stream_id, uxrStreamId best_effort_in_stream_id,
+              uxrObjectId participant_id, const char *client_namespace);
+
+    void poll(uxrSession *session);
 };
+
+bool RcvTopicsPubs::init(uxrSession *session, uxrStreamId reliable_out_stream_id,
+                         uxrStreamId reliable_in_stream_id, uxrStreamId best_effort_in_stream_id,
+                         uxrObjectId participant_id, const char *client_namespace) {
+
+    uint16_t current_request_id = 0;
+@[ for idx, sub in enumerate(subscriptions) ]@
+    {
+        uint16_t queue_depth = uORB::DefaultQueueSize<@(sub['simple_base_type'])_s>::value * 2;
+
+
+        rcv_subscriptions[@(idx)].data_reader = uxr_object_id(0, UXR_INVALID_ID);
+        rcv_subscriptions[@(idx)].request_id = current_request_id++; //incorrect
+        rcv_subscriptions[@(idx)].stream_id = reliable_in_stream_id;
+        rcv_subscriptions[@(idx)].length = queue_depth; //incorrect
+        rcv_subscriptions[@(idx)].orb_meta = ORB_ID(@(sub['topic_simple']));
+        fds_incoming[@(idx)].fd = orb_subscribe(rcv_subscriptions[@(idx)].orb_meta);
+        fds_incoming[@(idx)].events = POLLIN;
+	if (rcv_subscriptions[@(idx)].data_reader.id != UXR_INVALID_ID ){
+
+	create_data_reader(session, reliable_out_stream_id,
+                                                            best_effort_in_stream_id, participant_id, @(idx),
+                                                            client_namespace, "@(sub['topic_simple'])",
+                                                            "@(sub['dds_type'])", queue_depth);
+	}
+    }
+@[ end for ]@
+
+
+    return true;
+}
 
 static void on_topic_update(uxrSession *session, uxrObjectId object_id, uint16_t request_id, uxrStreamId stream_id,
 		     struct ucdrBuffer *ub, uint16_t length, void *args)
@@ -159,16 +206,33 @@ static void on_topic_update(uxrSession *session, uxrObjectId object_id, uint16_t
 	}
 }
 
-bool RcvTopicsPubs::init(uxrSession *session, uxrStreamId reliable_out_stream_id, uxrStreamId reliable_in_stream_id, uxrStreamId best_effort_in_stream_id, uxrObjectId participant_id, const char *client_namespace)
+
+void RcvTopicsPubs::poll(uxrSession *session)
 {
-@[    for idx, sub in enumerate(subscriptions)]@
-	{
-			uint16_t queue_depth = uORB::DefaultQueueSize<@(sub['simple_base_type'])_s>::value * 2; // use a bit larger queue size than internal
-			create_data_reader(session, reliable_out_stream_id, best_effort_in_stream_id, participant_id, @(idx), client_namespace, "@(sub['topic_simple'])", "@(sub['dds_type'])", queue_depth);
-	}
-@[    end for]@
+    int poll_result = px4_poll(fds_incoming, @(len(subscriptions)), 1000);
 
-	uxr_set_topic_callback(session, on_topic_update, this);
+    if (poll_result == 0) {
+        // Timeout, no incoming data
+        return;
 
-	return true;
+    } else if (poll_result < 0) {
+        // Handle Error
+        PX4_ERR("ERROR while polling uORB for incoming data: %d", poll_result);
+        return;
+    }
+
+    for (unsigned idx = 0; idx < @(len(subscriptions)); ++idx) {
+        if (fds_incoming[idx].revents & POLLIN) {
+            alignas(sizeof(uint64_t)) char incoming_data[max_topic_size];
+            orb_copy(rcv_subscriptions[idx].orb_meta, fds_incoming[idx].fd, &incoming_data);
+
+            ucdrBuffer ub;
+
+                on_topic_update(session, rcv_subscriptions[idx].data_reader, rcv_subscriptions[idx].request_id, rcv_subscriptions[idx].stream_id, &ub, rcv_subscriptions[idx].length, this);
+            } else {
+                // Handle error
+                PX4_ERR("Error uxr_prepare_input_stream UXR_INVALID_REQUEST_ID");
+            }
+
+    }
 }
